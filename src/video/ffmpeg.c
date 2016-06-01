@@ -26,7 +26,6 @@
 #include <Limelight.h>
 
 #include <stdlib.h>
-#include <libswscale/swscale.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -39,8 +38,6 @@ static AVFrame* dec_frame;
 
 enum decoders {SOFTWARE, VDPAU};
 enum decoders decoder_system;
-
-#define BYTES_PER_PIXEL 4
 
 // This function must be called before
 // any other decoding functions
@@ -99,8 +96,11 @@ int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int thread
 
   if (perf_lvl & SLICE_THREADING)
     decoder_ctx->thread_type = FF_THREAD_SLICE;
-  else
+  else {
+    decoder_ctx->flags2 |= CODEC_FLAG2_FAST;
+    decoder_ctx->delay = 0;
     decoder_ctx->thread_type = FF_THREAD_FRAME;
+  }
 
   decoder_ctx->thread_count = thread_count;
 

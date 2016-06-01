@@ -29,15 +29,17 @@
 #include <stdbool.h>
 
 #define DECODER_BUFFER_SIZE 92*1024
+#define ODROID_THREAD_COUNT 4
 
 static char* ffmpeg_buffer;
 
 static void sdl_setup(int videoFormat, int width, int height, int redrawRate, void* context, int drFlags) {
-  int avc_flags = SLICE_THREADING;
+  static int perf_lvl = 0;
+  if(height < 1080 && redrawRate < 60)
+    perf_lvl = LOW_LATENCY_DECODE | SLICE_THREADING;
   if (drFlags & FORCE_HARDWARE_ACCELERATION)
-    avc_flags |= HARDWARE_ACCELERATION;
-
-  if (ffmpeg_init(videoFormat, width, height, avc_flags, 2) < 0) {
+    perf_lvl |= HARDWARE_ACCELERATION;
+  if (ffmpeg_init(videoFormat, width, height, perf_lvl, ODROID_THREAD_COUNT) < 0) {
     fprintf(stderr, "Couldn't initialize video decoding\n");
     exit(1);
   }
@@ -50,6 +52,7 @@ static void sdl_setup(int videoFormat, int width, int height, int redrawRate, vo
 }
 
 static void sdl_cleanup() {
+  free(ffmpeg_buffer);
   ffmpeg_destroy();
 }
 

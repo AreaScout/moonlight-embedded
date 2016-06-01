@@ -24,6 +24,8 @@
 
 #include <Limelight.h>
 
+#include <SDL_opengles2.h>
+
 static bool done;
 static int fullscreen_flags;
 
@@ -33,25 +35,60 @@ static SDL_Texture *bmp;
 
 SDL_mutex *mutex;
 
+typedef GLubyte* (APIENTRY * glGetString_Func)(unsigned int);
+glGetString_Func glGetStringAPI = NULL;
+
 void sdl_init(int width, int height, bool fullscreen) {
+  int drv_index = -1;
   if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS)) {
     fprintf(stderr, "Could not initialize SDL - %s\n", SDL_GetError());
     exit(1);
   }
 
-  fullscreen_flags = fullscreen?SDL_WINDOW_FULLSCREEN:0;
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+  SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+
+  fullscreen_flags = fullscreen?SDL_WINDOW_FULLSCREEN_DESKTOP:0;
   window = SDL_CreateWindow("Moonlight", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_OPENGL | fullscreen_flags);
   if(!window) {
     fprintf(stderr, "SDL: could not create window - exiting\n");
     exit(1);
   }
 
+  SDL_GLContext ctx = SDL_GL_CreateContext(window);
+  SDL_GL_MakeCurrent(window, ctx);
+
+  glGetStringAPI = (glGetString_Func)SDL_GL_GetProcAddress("glGetString");
+
+  SDL_Log("Available renderers:\n");
+  SDL_Log("\n");
+  for(int it = 0; it < SDL_GetNumRenderDrivers(); it++) {
+      SDL_RendererInfo info;
+      SDL_GetRenderDriverInfo(it,&info);
+
+      SDL_Log("%s\n", info.name);
+
+      if(strcmp("opengles2", info.name) == 0)
+          drv_index = it;
+  }
+  SDL_Log("\n");
+  SDL_Log("Vendor     : %s\n", glGetStringAPI(GL_VENDOR));
+  SDL_Log("Renderer   : %s\n", glGetStringAPI(GL_RENDERER));
+  SDL_Log("Version    : %s\n", glGetStringAPI(GL_VERSION));
+  SDL_Log("Extensions : %s\n", glGetStringAPI(GL_EXTENSIONS));
+
+  SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
+
   SDL_SetRelativeMouseMode(SDL_TRUE);
-  renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+  renderer = SDL_CreateRenderer(window, drv_index, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
   if (!renderer) {
     printf("SDL_CreateRenderer failed: %s\n", SDL_GetError());
     exit(1);
   }
+
+  SDL_ShowCursor(SDL_DISABLE);
 
   bmp = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_YV12, SDL_TEXTUREACCESS_STREAMING, width, height);
   if (!bmp) {
@@ -77,7 +114,7 @@ void sdl_loop() {
       done = true;
       break;
     case SDL_TOGGLE_FULLSCREEN:
-      fullscreen_flags ^= SDL_WINDOW_FULLSCREEN;
+      fullscreen_flags ^= SDL_WINDOW_FULLSCREEN_DESKTOP;
       SDL_SetWindowFullscreen(window, fullscreen_flags);
     case SDL_MOUSE_GRAB:
       SDL_SetRelativeMouseMode(SDL_TRUE);
