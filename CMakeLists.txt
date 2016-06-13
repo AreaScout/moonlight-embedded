@@ -84,7 +84,7 @@ add_subdirectory(libgamestream)
 
 add_executable(moonlight ${SRC_LIST})
 target_link_libraries(moonlight gamestream)
-set_property(TARGET moonlight PROPERTY C_STANDARD 99)
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99")
 
 if (CEC_FOUND)
   list(APPEND MOONLIGHT_DEFINITIONS HAVE_LIBCEC)
