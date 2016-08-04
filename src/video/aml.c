@@ -92,7 +92,7 @@ void aml_setup(int videoFormat, int width, int height, int redrawRate, void* con
   codecParam.am_sysinfo.width = width;
   codecParam.am_sysinfo.height = height;
   codecParam.am_sysinfo.rate = 96000 / redrawRate;
-  codecParam.am_sysinfo.param |= SYNC_OUTSIDE;
+  codecParam.am_sysinfo.param = (void*)((size_t)codecParam.am_sysinfo.param | SYNC_OUTSIDE);
 
   int api = codec_init(&codecParam);
   if (api != 0) {
