@@ -39,7 +39,7 @@ typedef GLubyte* (APIENTRY * glGetString_Func)(unsigned int);
 glGetString_Func glGetStringAPI = NULL;
 
 void sdl_init(int width, int height, bool fullscreen) {
-  int drv_index = -1;
+  int drv_index = -1, it = 0;
   if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS)) {
     fprintf(stderr, "Could not initialize SDL - %s\n", SDL_GetError());
     exit(1);
@@ -64,7 +64,7 @@ void sdl_init(int width, int height, bool fullscreen) {
 
   SDL_Log("Available renderers:\n");
   SDL_Log("\n");
-  for(int it = 0; it < SDL_GetNumRenderDrivers(); it++) {
+  for(it = 0; it < SDL_GetNumRenderDrivers(); it++) {
       SDL_RendererInfo info;
       SDL_GetRenderDriverInfo(it,&info);
 
