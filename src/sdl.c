@@ -40,6 +40,7 @@ glGetString_Func glGetStringAPI = NULL;
 
 void sdl_init(int width, int height, bool fullscreen) {
   int drv_index = -1, it = 0;
+  char rendername[256] = { 0 };
   if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS)) {
     fprintf(stderr, "Could not initialize SDL - %s\n", SDL_GetError());
     exit(1);
@@ -62,22 +63,21 @@ void sdl_init(int width, int height, bool fullscreen) {
 
   glGetStringAPI = (glGetString_Func)SDL_GL_GetProcAddress("glGetString");
 
-  SDL_Log("Available renderers:\n");
-  SDL_Log("\n");
   for(it = 0; it < SDL_GetNumRenderDrivers(); it++) {
       SDL_RendererInfo info;
       SDL_GetRenderDriverInfo(it,&info);
 
-      SDL_Log("%s\n", info.name);
+      strcat(rendername, info.name);
+      strcat(rendername, " ");
 
       if(strcmp("opengles2", info.name) == 0)
           drv_index = it;
   }
-  SDL_Log("\n");
-  SDL_Log("Vendor     : %s\n", glGetStringAPI(GL_VENDOR));
-  SDL_Log("Renderer   : %s\n", glGetStringAPI(GL_RENDERER));
-  SDL_Log("Version    : %s\n", glGetStringAPI(GL_VERSION));
-  SDL_Log("Extensions : %s\n", glGetStringAPI(GL_EXTENSIONS));
+  fprintf(stdout, "Available Renderers: %s\n", rendername);
+  fprintf(stdout, "Vendor     : %s\n", glGetStringAPI(GL_VENDOR));
+  fprintf(stdout, "Renderer   : %s\n", glGetStringAPI(GL_RENDERER));
+  fprintf(stdout, "Version    : %s\n", glGetStringAPI(GL_VERSION));
+  fprintf(stdout, "Extensions : %s\n", glGetStringAPI(GL_EXTENSIONS));
 
   SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
 
