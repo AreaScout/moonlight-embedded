@@ -39,7 +39,7 @@ static void sdl_setup(int videoFormat, int width, int height, int redrawRate, vo
     perf_lvl = LOW_LATENCY_DECODE | SLICE_THREADING;
   if (drFlags & FORCE_HARDWARE_ACCELERATION)
     perf_lvl |= HARDWARE_ACCELERATION;
-  if (ffmpeg_init(videoFormat, width, height, perf_lvl, ODROID_THREAD_COUNT) < 0) {
+  if (ffmpeg_init(videoFormat, width, height, perf_lvl, SDL_BUFFER_FRAMES, ODROID_THREAD_COUNT) < 0) {
     fprintf(stderr, "Couldn't initialize video decoding\n");
     exit(1);
   }
@@ -65,11 +65,12 @@ static int sdl_submit_decode_unit(PDECODE_UNIT decodeUnit) {
       length += entry->length;
       entry = entry->next;
     }
+    ffmpeg_decode(ffmpeg_buffer, length);
 
     if (SDL_LockMutex(mutex) == 0) {
-      int ret = ffmpeg_decode(ffmpeg_buffer, length);
-      if (ret == 1) {
-        AVFrame* frame = ffmpeg_get_frame();
+      AVFrame* frame = ffmpeg_get_frame();
+      if (frame != NULL) {
+        sdlNextFrame++;
 
         SDL_Event event;
         event.type = SDL_USEREVENT;
