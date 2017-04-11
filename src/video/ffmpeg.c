@@ -50,7 +50,7 @@ int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer
   avcodec_register_all();
 
   av_init_packet(&pkt);
-
+  int i;
   #ifdef HAVE_VDPAU
   if (perf_lvl & HARDWARE_ACCELERATION) {
     switch (videoFormat) {
@@ -124,7 +124,7 @@ int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer
     return -1;
   }
 
-  for (int i = 0; i < buffer_count; i++) {
+  for (i = 0; i < buffer_count; i++) {
     dec_frames[i] = av_frame_alloc();
     if (dec_frames[i] == NULL) {
       fprintf(stderr, "Couldn't allocate frame");
@@ -143,13 +143,14 @@ int ffmpeg_init(int videoFormat, int width, int height, int perf_lvl, int buffer
 // This function must be called after
 // decoding is finished
 void ffmpeg_destroy(void) {
+  int i;
   if (decoder_ctx) {
     avcodec_close(decoder_ctx);
     av_free(decoder_ctx);
     decoder_ctx = NULL;
   }
   if (dec_frames) {
-    for (int i = 0; i < dec_frames_cnt; i++) {
+    for (i = 0; i < dec_frames_cnt; i++) {
       if (dec_frames[i])
         av_frame_free(&dec_frames[i]);
     }
